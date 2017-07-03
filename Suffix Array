@@ -75,7 +75,16 @@ struct SuffixArray {
 					curr+=pp,nxt+=pp,lcp[i]+=pp;
 			}
 		}
-	}
+	}/*
+	lld GETLCP(lld x,lld y) {
+		lld ret = 0;
+		repd(j,LOGN-1,0) {
+			lld pp=(1<<j);
+			if(x+pp-1<len and y+pp-1<len and rnk[j][x] == rnk[j][y]) 
+				x+=pp,y+=pp,ret+=pp;
+		}
+		return ret;
+	}*/
 } SA;
 lld n,m,x,dp[N][31];
 lld getLCP(lld x,lld y) {
