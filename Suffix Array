@@ -1,0 +1,107 @@
+//http://codeforces.com/contest/822/problem/E
+#include<bits/stdc++.h>
+#define rep(i,start,lim) for(lld i=start;i<lim;i++)
+#define repd(i,start,lim) for(lld i=start;i>=lim;i--)
+#define scan(x) scanf("%lld",&x)
+#define print(x) printf("%lld ",x)
+#define f first
+#define s second
+#define pb push_back
+#define mp make_pair
+#define br printf("\n")
+#define sz(a) lld((a).size())
+#define YES printf("YES\n")
+#define NO printf("NO\n")
+#define all(c) (c).begin(),(c).end()
+using namespace std;
+#define INF         1011111111
+#define LLINF       1000111000111000111LL
+#define EPS         (double)1e-10
+#define MOD         1000000007
+#define PI          3.14159265358979323
+using namespace std;
+typedef long double ldb;
+typedef long long lld;
+lld powm(lld base,lld exp,lld mod=MOD) {lld ans=1;while(exp){if(exp&1) ans=(ans*base)%mod;exp>>=1,base=(base*base)%mod;}return ans;}
+typedef vector<lld> vlld;
+typedef pair<lld,lld> plld;
+typedef map<lld,lld> mlld;
+typedef set<lld> slld;
+#define N 300005
+#define LOGN 23
+lld log_base_2[N];
+struct SparseTable{
+	lld n,m[N][LOGN];
+	void pre() {
+		for(lld j=1;(1<<j)<=n;j++) for(lld i=0;i+(1<<j)-1<n;i++) 
+			m[i][j]=min(m[i][j-1],m[i+(1<<(j-1))][j-1]);
+	}
+	lld get(lld l,lld r) {
+		lld tmp=log_base_2[r-l+1];
+		return min(m[l][tmp],m[r-(1<<tmp)+1][tmp]);
+	}
+} st;
+struct SuffixArray {
+	string s;
+	lld len;
+	pair<plld,lld> p[N];
+	lld rnk[LOGN][N],Suffix[N],lcp[N],sorted[N];
+	void Pass(lld level) {
+		sort(p,p+len);
+		lld curr=0;
+		rep(i,0,len) {
+			if(i and p[i-1].f != p[i].f) ++curr;
+			rnk[level][p[i].s] = curr;
+		}
+	}
+	void constructSA() {
+		len = sz(s);
+		rep(i,0,len) p[i] = mp(mp(s[i]-'a',0LL),i);
+		Pass(0);
+		rep(level,0,LOGN-1) {
+			lld curr=(1<<level);
+			rep(i,0,len) p[i] = mp(mp(rnk[level][i] , (i+curr<len? rnk[level][i+curr] : -1)),i);
+			Pass(level+1);
+		}
+		rep(i,0,len) Suffix[rnk[LOGN-1][i]] = i, sorted[i] = rnk[LOGN-1][i];
+	}
+	void BuildLCP() {
+		rep(i,0,len-1) {
+			lld curr = Suffix[i], nxt = Suffix[i+1];
+			lcp[i] = 0;
+			repd(j,LOGN-1,0) {
+				lld pp=(1<<j);
+				if(curr+pp-1<len and nxt+pp-1<len and rnk[j][curr] == rnk[j][nxt]) 
+					curr+=pp,nxt+=pp,lcp[i]+=pp;
+			}
+		}
+	}
+} SA;
+lld n,m,x,dp[N][31];
+lld getLCP(lld x,lld y) {
+	y+=(n+1);
+	lld q1 = SA.sorted[x], q2 = SA.sorted[y];
+	if(q1>q2) swap(q1,q2);
+	q2--;
+	return st.get(q1,q2);
+}
+int main()
+{
+	rep(i,2,N) log_base_2[i]=log_base_2[i>>1]+1;
+	string s,t,all;
+	cin>>n>>s>>m>>t>>x,all=s+"#"+t;
+	SA.s = all;
+	SA.constructSA();
+	SA.BuildLCP();
+	st.n=n+m;
+	rep(i,0,(n+m)) st.m[i][0]=SA.lcp[i];
+	st.pre();
+	rep(i,0,n) rep(j,0,x+1) {
+		if(dp[i][j]==m) return 0*YES;
+		dp[i+1][j] = max(dp[i+1][j] , dp[i][j]);
+		lld curr_lcp = getLCP(i,dp[i][j]);
+		if(curr_lcp) dp[i+curr_lcp][j+1] = max(dp[i+curr_lcp][j+1], curr_lcp + dp[i][j]);
+	}
+	rep(i,0,x+1) if(dp[n][i] == m) return 0*YES;
+	return 0*NO;
+}
